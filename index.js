@@ -1,8 +1,13 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+// Kullanıcıdan alınan örnek değer
+const userInput = 50000; // Bu değeri kullanıcıdan input olarak alabilirsin
+let lastMonths = 6; // Son x ayın enflasyon oranlarını almak için kullanılacak ay sayısı
+calculateWithInflation(userInput, lastMonths);
+
 // TÜFE verilerini çekme fonksiyonu
-async function fetchTufeRates() {
+async function fetchTufeRates(lastMonths) {
     try {
         const response = await axios.get('https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Istatistikler/Enflasyon+Verileri/Tuketici+Fiyatlari');
         const $ = cheerio.load(response.data);
@@ -21,9 +26,9 @@ async function fetchTufeRates() {
         });
 
         // Son 6 ayın TÜFE verilerini al
-        const lastSixMonthsTufe = tufeData.slice(0, 6);
-        console.log("🚀 ~ fetchTufeRates ~ lastSixMonthsTufe:", lastSixMonthsTufe)
-        return lastSixMonthsTufe.map(data => data.tufe);
+        const lastMonthsTufe = tufeData.slice(0, lastMonths);
+        console.log("🚀 ~ fetchTufeRates ~ lastMonthsTufe:", lastMonthsTufe)
+        return lastMonthsTufe.map(data => data.tufe);
 
     } catch (error) {
         console.error('TÜFE verisi çekme hatası:', error);
@@ -31,7 +36,7 @@ async function fetchTufeRates() {
 }
 
 // ÜFE verilerini çekme fonksiyonu
-async function fetchUfeRates() {
+async function fetchUfeRates(lastMonths) {
     try {
         const response = await axios.get('https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Istatistikler/Enflasyon+Verileri/Uretici+Fiyatlari');
         const $ = cheerio.load(response.data);
@@ -49,10 +54,10 @@ async function fetchUfeRates() {
             }
         });
 
-        // Son 6 ayın ÜFE verilerini al
-        const lastSixMonthsUfe = ufeData.slice(0, 6);
-        console.log("🚀 ~ fetchUfeRates ~ lastSixMonthsUfe:", lastSixMonthsUfe)
-        return lastSixMonthsUfe.map(data => data.ufe);
+        // Son x ayın ÜFE verilerini al
+        const lastMonthsUfe = ufeData.slice(0, lastMonths);
+        console.log("🚀 ~ fetchUfeRates ~ lastMonthsUfe:", lastMonthsUfe)
+        return lastMonthsUfe.map(data => data.ufe);
 
     } catch (error) {
         console.error('ÜFE verisi çekme hatası:', error);
@@ -60,10 +65,10 @@ async function fetchUfeRates() {
 }
 
 // Kullanıcının girdiği değeri TÜFE ve ÜFE ortalamasına göre artırma fonksiyonu
-async function calculateWithInflation(userInput) {
+async function calculateWithInflation(userInput, lastMonths) {
     try {
-        const tufeRates = await fetchTufeRates();
-        const ufeRates = await fetchUfeRates();
+        const tufeRates = await fetchTufeRates(lastMonths);
+        const ufeRates = await fetchUfeRates(lastMonths);
 
         // Son 6 ayın TÜFE ve ÜFE verilerini kullanarak ortalama enflasyon oranını hesaplama
         let totalInflation = 0;
@@ -81,7 +86,3 @@ async function calculateWithInflation(userInput) {
         console.error('Hesaplama sırasında bir hata oluştu:', error);
     }
 }
-
-// Kullanıcıdan alınan örnek değer
-const userInput = 50000; // Bu değeri kullanıcıdan input olarak alabilirsin
-calculateWithInflation(userInput);
